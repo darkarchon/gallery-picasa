@@ -1,8 +1,7 @@
 gallery-picasa
 ==============
 
-MODx plugin to use Picasa as storage and gallery
+MODx Revo plugin to use Picasa as storage and gallery.
+Bootstrap 3 output.
 
-Original post is habrahabr.ru/post/83358/
-
-But modification is modx.im/blog/addons/433.html
+Original post is habrahabr.ru/post/83358/  modifications on modx.im/blog/addons/433.html
