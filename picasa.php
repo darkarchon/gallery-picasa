@@ -4,19 +4,19 @@ $cid = $modx->resource->get('id');
 $picasa_path    = "/core/components/picasa/";
 $cache_path     = "/assets/components/picasa/cache/picasa_api_cache/";
 
-$username       = isset($username) ? $username : "will.smith"; // id пользователя picasa, чтобы вывести его альбомы
+$username       = isset($username) ? $username : "will.smith"; // id или имя пользователя google picasa
 $exclude_gid    = isset($exclude_gid) ? explode(",",$exclude_gid) : array(); // массив id-номеров галерей, которые нужно исключить
 $row_images     = isset($row_images) ? $row_images : 4; // количество картинок в строке (по умолчанию по 4)
+$image_width    = (isset($images_width) && $images_width != '') ? $images_width  : '200,800'; // размер возвращаемых изображений, превью/целая картинки
 
-$solt = "111111111111111111111111111111111111111"; // ЗАМЕНИТЬ НА СВОЁ СУПЕР-СЕКРЕТНОЕ-СОЧЕТАНИЕ!
+$solt = "0759f56c5c8c8e61bc693a7c416f9aa7adbbb4c6"; // ЗАМЕНИТЬ НА СВОЙ SALT !
 
-        ini_set('include_path', getenv(DOCUMENT_ROOT).$picasa_path);
-        $library_path = $_SERVER['DOCUMENT_ROOT'].$picasa_path;
-                include_once ($_SERVER['DOCUMENT_ROOT'].$picasa_path.'Picasa.php');
+    ini_set('include_path', getenv(DOCUMENT_ROOT).$picasa_path);
+    $library_path = $_SERVER['DOCUMENT_ROOT'].$picasa_path;
+    include_once ($_SERVER['DOCUMENT_ROOT'].$picasa_path.'Picasa.php');
 
-      function get_album($user, $album_id, $images_width = NULL)
-      {
-        if ($images_width==NULL) { $images_width = '200,800'; } // $images_width - размер возвращаемых изображений
+    function get_album($user, $album_id, $images_width = NULL)
+        {
 
         // для любителей кэша тут код а-ля, если есть кеш, берем данные из кеша:
         /*
@@ -26,15 +26,15 @@ $solt = "111111111111111111111111111111111111111"; // ЗАМЕНИТЬ НА СВ
           }
           else      
           { // и нужно закрыть ручками это условие в конце функции
-                                */
-                                $pic = new Picasa();
-                                // Получаем данные для альбома, в последнем параметре указываем размеры необходимых изображений.
+        */
+                        $pic = new Picasa();
+                        // Получаем данные для альбома, в последнем параметре указываем размеры необходимых изображений.
         // Можно также указать размеры: 72, 144, 200, 320, 400, 512, 576, 640, 720, 800, 912, 1024, 1152, 1280, 1440, 1600
         // googlesystem.blogspot.com/2006/12/embed-photos-from-picasa-web-albums.html
-                                $album = $pic->getAlbumById($user, $album_id,null,NULL,null,null,$images_width);
+                        $album = $pic->getAlbumById($user, $album_id,null,NULL,null,null,$images_width);
         // Получаем данные о изображениях в альбоме
-                                $images = $album->getImages();
-                                                foreach ($images as $image)
+                        $images = $album->getImages();
+                            foreach ($images as $image)
               {
                   $thumbnails = $image->getThumbnails();
                   $album_data['images'][] = array('url'=>(string)$thumbnails[1]->getUrl(),
@@ -55,87 +55,86 @@ $solt = "111111111111111111111111111111111111111"; // ЗАМЕНИТЬ НА СВ
               // сохраняем данные в кеш (оставил это для тех кому нужно)
                                 //if(!is_dir($_SERVER['DOCUMENT_ROOT'].$cache_path.$user))
                                 //mkdir($_SERVER['DOCUMENT_ROOT'].$cache_path.$user,0777);
-                                                        //file_put_contents($_SERVER['DOCUMENT_ROOT'].$cache_path.$user.'/'.$album_name,serialize($album_data));
+                                                //file_put_contents($_SERVER['DOCUMENT_ROOT'].$cache_path.$user.'/'.$album_name,serialize($album_data));
 
           return $album_data;
       }
 
-$input[gid] = (is_numeric($_GET[gallery_id])) ? $_GET[gallery_id] : $_GET[gallery_id]*1; // примитивная защита от инъекций
-$input[hash] = is_string($_GET[hash]) ? htmlentities($_GET[hash]) : strval(htmlentities($_GET[hash]));
+    $input[gid] = (is_numeric($_GET[gallery_id])) ? $_GET[gallery_id] : $_GET[gallery_id]*1; // примитивная защита от инъекций
+    $input[hash] = is_string($_GET[hash]) ? htmlentities($_GET[hash]) : strval(htmlentities($_GET[hash]));
 
 if ($input[gid]!="")
 {
     if (sha1($input[gid].$solt)==$input[hash])
-    {   $modx->log(modX::LOG_LEVEL_ERROR,'Oley Ola, equal!');
-      $GoBackButton = '
-<a class="btn btn-primary" style="position: relative; margin-top: -43px; float: right;" href="[[~'.$cid.']]">
-<i class="icon-chevron-left icon-white"></i> 
-назад</a>
-';
-      // проверка на случай если имеется id с правильным хэшем для неправильной галереи (которая исключена или удалена)
-      if (in_array($input[gid], $exclude_gid)) { echo "<div class=\"alert alert-error\">Увы, но данная галерея не найдена! Возможно она была удалена.</div>"; return false; }
-
-      $current_album = get_album($username, $input[gid], $images_width);
+    {   
+        $GoBackButton = '
+            <a class="btn btn-primary" style="position: relative; margin-top: -43px; float: right;" href="[[~'.$cid.']]">
+            <i class="icon-chevron-left icon-white"></i> 
+            назад</a>
+        ';
+        // проверка на случай если имеется id с правильным хэшем для неправильной галереи (которая исключена или удалена)
+        if (in_array($input[gid], $exclude_gid)) { echo "<div class=\"alert alert-error\">Увы, но данная галерея не найдена! Возможно она была удалена.</div>"; return false; }
+        
+        $current_album = get_album($username, $input[gid], $images_width);
 
         $modx->setPlaceholder('AlbumTitle', '<h2><small>«'.$current_album['title'].'»</small></h2>');
         $modx->setPlaceholder('GoBackBtn', $GoBackButton);
         
-      $row_count=0;
+        $row_count=0;
         foreach($current_album[images] as $image)
         {
-          $row_count++;
-          if ($row_count==1) { echo "\n<div class=\"row-fluid\">"; }
+            $row_count++;
+            if ($row_count==1) { echo "\n<div class=\"row\">"; }
 
-echo '
-        <div class="span3">
-                <a class="thumbnail fancybox" rel="gallery" href="'.$image[url].'">
-                <img class="img-rounded" src="'.$image[tn_url].'" width="'.$image[tn_width].'" height="'.$image[tn_height].'">
-                </a>
-        </div>
-';
-          if ($row_count==$row_images) { echo '</div><hr>'; $row_count=0; }
+            echo '
+                    <div class="col-xs-3">
+                        <a class="thumbnail fancybox" rel="gallery" href="'.$image[url].'">
+                            <img class="img-rounded" src="'.$image[tn_url].'" width="'.$image[tn_width].'" height="'.$image[tn_height].'">
+                        </a>
+                    </div>
+            ';
+            if ($row_count==$row_images) { echo '</div><hr>'; $row_count=0; }
         }
-        echo '</div><!--Закрыли последний row-fluid -->';
+            echo '</div><!--Закрыли последний row -->';
+        }
+        else
+        {
+            echo "<div class=\"alert alert-error\"><h2>Порошок — уходи!    (<i class=\"icon-remove\"></i>__<i class=\"icon-remove\"></i>)</h2></div>";
+            return false;
+        }
     }
-    else
-    {
-      echo "<div class=\"alert alert-error\"><h2>Порошок — уходи!    (<i class=\"icon-remove\"></i>__<i class=\"icon-remove\"></i>)</h2></div>";
-      return false;
-    }
-}
-else
-{
-  $modx->setPlaceholder('AlbumTitle', '<h2><small>Альбомы пользователя <b>'.$username.'</b></small></h2>');
-  $pic = new Picasa();
-  $all_albums = $pic->getAlbumsByUsername($username);
-  $albums = $all_albums->getAlbums();
-  $row_count=0;
-                foreach($albums as $album)
+else    {
+    $modx->setPlaceholder('AlbumTitle', '<h2><small>Альбомы пользователя <b>'.$username.'</b></small></h2>');
+    $pic = new Picasa();
+    $all_albums = $pic->getAlbumsByUsername($username);
+    $albums = $all_albums->getAlbums();
+    $row_count=0;
+    
+    foreach($albums as $album)
         {
     if (in_array($album->getIdnum(), $exclude_gid))
-                { continue; }
-    else
-      {
-      $row_count++;
-              // иконка альбома
-              $album_thumb['id'] = $album->getIdnum();
-              $album_thumb['url'] = $album->getIcon();
-              $album_thumb['width'] = '160';
-              $album_thumb['height'] = '160';
-              $album_thumb['title'] = $album->getTitle();
+        { continue; }
+    else {
+        $row_count++;
+        // иконка альбома
+        $album_thumb['id'] = $album->getIdnum();
+        $album_thumb['url'] = $album->getIcon();
+        $album_thumb['width'] = '160';
+        $album_thumb['height'] = '160';
+        $album_thumb['title'] = $album->getTitle();
 
-      if ($row_count==1) { echo '<div class="row-fluid">'; }
-echo '
-<div class="span3">
-        <a class="thumbnail" href="[[~'.$cid.']]?gallery_id='.$album_thumb['id'].'&hash='.sha1($album_thumb['id'].$solt).'">
-                <img src="'.$album_thumb['url'].'" class="img-rounded" width="'.$album_thumb['width'].'" height="'.$album_thumb['height'].'" alt="'.$album_thumb['title'].'" title="'.$album_thumb['title'].'">
-        </a>
-        <div class="album_description">'.$album_thumb['title'].'</div>
-</div>';
+        if ($row_count==1) { echo '<div class="row">'; }
+        echo '
+            <div class="col-xs-3">
+                <a class="thumbnail" href="[[~'.$cid.']]?gallery_id='.$album_thumb['id'].'&hash='.sha1($album_thumb['id'].$solt).'">
+                    <img src="'.$album_thumb['url'].'" class="img-rounded" width="'.$album_thumb['width'].'" height="'.$album_thumb['height'].'" alt="'.$album_thumb['title'].'" title="'.$album_thumb['title'].'">
+                </a>
+                <div class="album_description">'.$album_thumb['title'].'</div>
+            </div>';
       
       if ($row_count==$row_images) { echo '</div>'; $row_count=0; }
         }
- }
-        echo '</div><!-- Закрыли последний row-fluid -->';
+    }
+        echo '</div><!-- Закрыли последний row -->';
 return $output;
 }
